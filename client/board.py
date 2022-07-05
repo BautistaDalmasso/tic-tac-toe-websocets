@@ -3,7 +3,7 @@
 import tkinter as tk
 from tkinter import font
 
-import game
+import server.game as game
 
 
 class TicTacToeBoard(tk.Tk):

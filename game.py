@@ -72,3 +72,11 @@ class TicTacToeGame:
 
     def has_winner(self) -> bool:
         return self._has_winner
+
+    def is_tied(self) -> bool:
+        played_moves = (
+            move.label
+            for row in self._current_moves
+            for move in row
+        )
+        return all(played_moves) and not self._has_winner

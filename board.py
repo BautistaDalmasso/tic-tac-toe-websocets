@@ -3,11 +3,11 @@
 import tkinter as tk
 from tkinter import font
 
-from game import TicTacToeGame
+import game
 
 
 class TicTacToeBoard(tk.Tk):
-    def __init__(self, game: TicTacToeGame) -> None:
+    def __init__(self, game: game.TicTacToeGame) -> None:
         super().__init__()
         self.title("Tic-Tac-Toe")
         self._cells = {}
@@ -49,3 +49,21 @@ class TicTacToeBoard(tk.Tk):
                     pady=5,
                     sticky="nsew",
                 )
+
+    def play(self, event):
+        """Handle a player's move."""
+        clicked_btn = event.widget
+        row, col = self._cells[clicked_btn]
+        move = game.Move(row, col, self._game.current_player.label)
+        if self._game.is_valid_move(move):
+            self._game.process_move(move)
+            if self._game.is_tied():
+                msg = "Tied game!"
+                print(msg)
+            elif self._game.has_winner():
+                msg = f'Player "{self._game.current_player.label}" won!'
+                print(msg)
+            else:
+                self._game.toggle_player()
+                msg = f"{self._game.current_player.label}'s turn"
+                print(msg)

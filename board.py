@@ -83,3 +83,14 @@ class TicTacToeBoard(tk.Tk):
         for button, coordinates in self._cells.items():
             if coordinates in self._game.winner_combo:
                 button.config(highlightbackground="red")
+
+
+def main():
+    """Create the game's board and run its main loop."""
+    game_ = game.TicTacToeGame()
+    board = TicTacToeBoard(game_)
+    board.mainloop()
+
+
+if __name__ == "__main__":
+    main()

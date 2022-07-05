@@ -80,3 +80,6 @@ class TicTacToeGame:
             for move in row
         )
         return all(played_moves) and not self._has_winner
+
+    def toggle_player(self):
+        self.current_player = next(self._players)

@@ -83,3 +83,10 @@ class TicTacToeGame:
 
     def toggle_player(self):
         self.current_player = next(self._players)
+
+    def reset_game(self):
+        for row, row_content in enumerate(self._current_moves):
+            for col, _ in enumerate(row_content):
+                row_content[col] = Move(row, col)
+        self._has_winner = False
+        self.winner_combo = []

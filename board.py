@@ -101,8 +101,12 @@ class TicTacToeBoard(tk.Tk):
         menu_bar.add_cascade(label="File", menu=file_menu)
 
     def reset_board(self):
-        #TODO
-        pass
+        self._game.reset_game()
+        self._update_display(msg="Ready?")
+        for button in self._cells.keys():
+            button.config(highlightbackground="lightblue")
+            button.config(text="")
+            button.config(fg="black")
 
 
 def main():

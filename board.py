@@ -12,6 +12,7 @@ class TicTacToeBoard(tk.Tk):
         self.title("Tic-Tac-Toe")
         self._cells = {}
         self._game = game
+        self._create_menu()
         self._create_board_display()
         self._create_board_grid()
 
@@ -83,6 +84,25 @@ class TicTacToeBoard(tk.Tk):
         for button, coordinates in self._cells.items():
             if coordinates in self._game.winner_combo:
                 button.config(highlightbackground="red")
+
+    def _create_menu(self):
+        menu_bar = tk.Menu(master=self)
+        self.config(menu=menu_bar)
+        file_menu = tk.Menu(master=menu_bar)
+        file_menu.add_command(
+            label="Play again",
+            command=self.reset_board
+        )
+        file_menu.add_separator()
+        file_menu.add_command(
+            label="Exit",
+            command=quit
+        )
+        menu_bar.add_cascade(label="File", menu=file_menu)
+
+    def reset_board(self):
+        #TODO
+        pass
 
 
 def main():

@@ -57,14 +57,29 @@ class TicTacToeBoard(tk.Tk):
         row, col = self._cells[clicked_btn]
         move = game.Move(row, col, self._game.current_player.label)
         if self._game.is_valid_move(move):
+            self._update_button(clicked_btn)
             self._game.process_move(move)
             if self._game.is_tied():
-                msg = "Tied game!"
-                print(msg)
+                self._update_display(msg="Tied game!", color="red")
             elif self._game.has_winner():
+                self._highlight_cells()
                 msg = f'Player "{self._game.current_player.label}" won!'
-                print(msg)
+                color = self._game.current_player.color
+                self._update_display(msg, color)
             else:
                 self._game.toggle_player()
                 msg = f"{self._game.current_player.label}'s turn"
-                print(msg)
+                self._update_display(msg)
+
+    def _update_button(self, clicked_btn: tk.Button):
+        clicked_btn.config(text=self._game.current_player.label)
+        clicked_btn.config(foreground=self._game.current_player.color)
+
+    def _update_display(self, msg: str, color: str = "black"):
+        self.display["text"] = msg
+        self.display["fg"] = color
+
+    def _highlight_cells(self):
+        for button, coordinates in self._cells.items():
+            if coordinates in self._game.winner_combo:
+                button.config(highlightbackground="red")

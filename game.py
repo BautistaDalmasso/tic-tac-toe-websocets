@@ -1,15 +1,15 @@
 """Controls the logic of a tic-tac-toe game."""
 
-from collections import namedtuple
+from typing import NamedTuple
 from itertools import cycle
 
 
-class Player(namedtuple):
+class Player(NamedTuple):
     label: str
     color: str
 
 
-class Move(namedtuple):
+class Move(NamedTuple):
     row: int
     col: int
     label: str = ""

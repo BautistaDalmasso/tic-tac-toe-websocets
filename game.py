@@ -48,4 +48,27 @@ class TicTacToeGame:
         columns = [list(col) for col in zip(*rows)]
         first_diagonal = [row[i] for i, row in enumerate(rows)]
         second_diagonal = [col[j] for j, col in enumerate(reversed(columns))]
-        return rows + columns + [first_diagonal, second_diagonal]
+        return (rows + columns + [first_diagonal, second_diagonal])
+
+    def is_valid_move(self, move: Move) -> bool:
+        row, col = move.row, move.col
+        move_was_not_played = self._current_moves[row][col].label == ""
+        return move_was_not_played and not self._has_winner
+
+    def process_move(self, move: Move):
+        """Process the current move and check if it's a win."""
+        row, col = move.row, move.col
+        self._current_moves[row][col] = move
+        for combo in self._winning_combos:
+            results = set(
+                self._current_moves[n][m].label
+                for n, m in combo
+            )
+            is_win = (len(results) == 1) and ("" not in results)
+            if is_win:
+                self._has_winner = True
+                self.winner_combo = combo
+                break
+
+    def has_winner(self) -> bool:
+        return self._has_winner

@@ -42,6 +42,7 @@ class TicTacToeBoard(tk.Tk):
                     highlightbackground="lightblue",
                 )
                 self._cells[button] = (row, col)
+                button.bind("<ButtonPress-1>", self.play)
                 button.grid(
                     row=row,
                     column=col,

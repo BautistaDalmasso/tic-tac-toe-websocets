@@ -2,16 +2,17 @@
 
 import tkinter as tk
 from tkinter import font
-
-import server.game as game
+import asyncio
+import websockets
+import json
 
 
 class TicTacToeBoard(tk.Tk):
-    def __init__(self, game: game.TicTacToeGame) -> None:
+    def __init__(self, websocket) -> None:
         super().__init__()
         self.title("Tic-Tac-Toe")
         self._cells = {}
-        self._game = game
+        self._ws = websocket
         self._create_menu()
         self._create_board_display()
         self._create_board_grid()
@@ -29,10 +30,10 @@ class TicTacToeBoard(tk.Tk):
     def _create_board_grid(self):
         grid_frame = tk.Frame(master=self)
         grid_frame.pack()
-        for row in range(self._game.board_size):
+        for row in range(3):
             self.rowconfigure(row, weight=1, minsize=50)
             self.columnconfigure(row, weight=1, minsize=75)
-            for col in range(self._game.board_size):
+            for col in range(3):
                 button = tk.Button(
                     master=grid_frame,
                     text="",
@@ -43,7 +44,9 @@ class TicTacToeBoard(tk.Tk):
                     highlightbackground="lightblue",
                 )
                 self._cells[button] = (row, col)
-                button.bind("<ButtonPress-1>", self.play)
+                button.bind("<ButtonPress-1>",
+                            lambda event:
+                            asyncio.ensure_future(self.play(event)))
                 button.grid(
                     row=row,
                     column=col,
@@ -52,14 +55,15 @@ class TicTacToeBoard(tk.Tk):
                     sticky="nsew",
                 )
 
-    def play(self, event):
+    async def play(self, event):
         """Handle a player's move."""
         clicked_btn = event.widget
         row, col = self._cells[clicked_btn]
-        move = game.Move(row, col, self._game.current_player.label)
-        if self._game.is_valid_move(move):
+        message = {"type": "move", "move": [row, col]}
+        await self._ws.send(json.dumps(message))
+        # TODO: handle state of the game.
+        if False:
             self._update_button(clicked_btn)
-            self._game.process_move(move)
             if self._game.is_tied():
                 self._update_display(msg="Tied game!", color="red")
             elif self._game.has_winner():
@@ -93,15 +97,10 @@ class TicTacToeBoard(tk.Tk):
             label="Play again",
             command=self.reset_board
         )
-        file_menu.add_separator()
-        file_menu.add_command(
-            label="Exit",
-            command=quit
-        )
         menu_bar.add_cascade(label="File", menu=file_menu)
 
     def reset_board(self):
-        self._game.reset_game()
+        # TODO: allow reseting the game.
         self._update_display(msg="Ready?")
         for button in self._cells.keys():
             button.config(highlightbackground="lightblue")
@@ -109,12 +108,22 @@ class TicTacToeBoard(tk.Tk):
             button.config(fg="black")
 
 
-def main():
+async def run_board(root):
+    try:
+        while True:
+            root.update()
+            await asyncio.sleep(.01)
+    except tk.TclError as e:
+        if "application has been destroyed" not in e.args[0]:
+            raise
+
+
+async def main():
     """Create the game's board and run its main loop."""
-    game_ = game.TicTacToeGame()
-    board = TicTacToeBoard(game_)
-    board.mainloop()
+    async with websockets.connect("ws://localhost:8001") as websocket:
+        board = TicTacToeBoard(websocket)
+        await run_board(board)
 
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())

@@ -1,18 +1,8 @@
 """Controls the logic of a tic-tac-toe game."""
 
-from typing import NamedTuple
 from itertools import cycle
 
-
-class Player(NamedTuple):
-    label: str
-    color: str
-
-
-class Move(NamedTuple):
-    row: int
-    col: int
-    label: str = ""
+from ..game_elements import Player, Move
 
 
 BOARD_SIZE = 3

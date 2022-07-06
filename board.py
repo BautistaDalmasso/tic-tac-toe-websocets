@@ -9,8 +9,15 @@ import json
 from game_elements import Player, Move
 
 
+class GameState:
+    """Keeps track of the game state at the client side."""
+    def __init__(self, board_size: int, current_player: Player):
+        self.board_size = board_size
+        self.current_player = current_player
+
+
 class TicTacToeBoard(tk.Tk):
-    def __init__(self, websocket, game_state) -> None:
+    def __init__(self, websocket, game_state: GameState) -> None:
         super().__init__()
         self.title("Tic-Tac-Toe")
         self._cells = {}
@@ -109,13 +116,6 @@ class TicTacToeBoard(tk.Tk):
             button.config(highlightbackground="lightblue")
             button.config(text="")
             button.config(fg="black")
-
-
-class GameState:
-    """Keeps track of the game state at the client side."""
-    def __init__(self, board_size: int, current_player: Player):
-        self.board_size = board_size
-        self.current_player = current_player
 
 
 async def run_board(root):

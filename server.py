@@ -3,6 +3,7 @@ import websockets
 import json
 
 import game
+from game_elements import Move
 
 
 async def handler(websocket):
@@ -24,7 +25,15 @@ async def handler(websocket):
                                     }
                             }
             case "move":
-                print(event)
+                move = Move(*event["move"])
+                if ttt_game.is_valid_move(move):
+                    ttt_game.process_move(move)
+                    ttt_game.toggle_player()
+                    response = {"type": "is_valid_move",
+                                "valid": True,
+                                "current_player": ttt_game.current_player}
+                else:
+                    response = {"type": "is_valid_move", "valid": False}
             case _:
                 # TODO: send an error!
                 pass

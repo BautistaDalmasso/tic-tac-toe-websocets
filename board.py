@@ -69,11 +69,18 @@ class TicTacToeBoard(tk.Tk):
         """Handle a player's move."""
         clicked_btn = event.widget
         row, col = self._cells[clicked_btn]
-        message = {"type": "move", "move": [row, col]}
+        message = {"type": "move",
+                   "move": Move(row, col,
+                                self._game_state.current_player.label)}
         await self._ws.send(json.dumps(message))
-        # TODO: handle state of the game.
-        if False:
+        # Makes sure the move is valid:
+        response = json.loads(await self._ws.recv())
+        assert response["type"] == "is_valid_move"
+        if response["valid"]:
             self._update_button(clicked_btn)
+            self._game_state.current_player = Player(
+                                                *response["current_player"])
+            """
             if self._game.is_tied():
                 self._update_display(msg="Tied game!", color="red")
             elif self._game.has_winner():
@@ -85,10 +92,11 @@ class TicTacToeBoard(tk.Tk):
                 self._game.toggle_player()
                 msg = f"{self._game.current_player.label}'s turn"
                 self._update_display(msg)
+            """  # TODO: handle differents states of the game.
 
     def _update_button(self, clicked_btn: tk.Button):
-        clicked_btn.config(text=self._game.current_player.label)
-        clicked_btn.config(foreground=self._game.current_player.color)
+        clicked_btn.config(text=self._game_state.current_player.label)
+        clicked_btn.config(foreground=self._game_state.current_player.color)
 
     def _update_display(self, msg: str, color: str = "black"):
         self.display["text"] = msg

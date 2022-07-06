@@ -6,13 +6,16 @@ import asyncio
 import websockets
 import json
 
+from game_elements import Player, Move
+
 
 class TicTacToeBoard(tk.Tk):
-    def __init__(self, websocket) -> None:
+    def __init__(self, websocket, game_state) -> None:
         super().__init__()
         self.title("Tic-Tac-Toe")
         self._cells = {}
         self._ws = websocket
+        self._game_state = game_state
         self._create_menu()
         self._create_board_display()
         self._create_board_grid()
@@ -22,7 +25,7 @@ class TicTacToeBoard(tk.Tk):
         display_frame.pack(fill=tk.X)
         self.display = tk.Label(
             master=display_frame,
-            text="Ready?",
+            text=f"Ready {self._game_state.current_player.label}?",
             font=font.Font(size=28, weight="bold"),
         )
         self.display.pack()
@@ -30,10 +33,10 @@ class TicTacToeBoard(tk.Tk):
     def _create_board_grid(self):
         grid_frame = tk.Frame(master=self)
         grid_frame.pack()
-        for row in range(3):
+        for row in range(self._game_state.board_size):
             self.rowconfigure(row, weight=1, minsize=50)
             self.columnconfigure(row, weight=1, minsize=75)
-            for col in range(3):
+            for col in range(self._game_state.board_size):
                 button = tk.Button(
                     master=grid_frame,
                     text="",
@@ -108,6 +111,13 @@ class TicTacToeBoard(tk.Tk):
             button.config(fg="black")
 
 
+class GameState:
+    """Keeps track of the game state at the client side."""
+    def __init__(self, board_size: int, current_player: Player):
+        self.board_size = board_size
+        self.current_player = current_player
+
+
 async def run_board(root):
     try:
         while True:
@@ -121,7 +131,19 @@ async def run_board(root):
 async def main():
     """Create the game's board and run its main loop."""
     async with websockets.connect("ws://localhost:8001") as websocket:
-        board = TicTacToeBoard(websocket)
+        # Tells the server that we want to start a new game.
+        message = {"type": "connect"}
+        await websocket.send(json.dumps(message))
+
+        response = json.loads(await websocket.recv())
+        # Makes sure the server's response corresponds to a
+        # game starting request.
+        assert response["type"] == "start_game"
+        board_size = response["board_data"]["board_size"]
+        current_player = Player(*response["board_data"]["current_player"])
+        game_state = GameState(board_size, current_player)
+
+        board = TicTacToeBoard(websocket, game_state)
         await run_board(board)
 
 

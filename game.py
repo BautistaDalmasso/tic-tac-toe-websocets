@@ -2,7 +2,7 @@
 
 from itertools import cycle
 
-from ..game_elements import Player, Move
+from game_elements import Player, Move
 
 
 BOARD_SIZE = 3

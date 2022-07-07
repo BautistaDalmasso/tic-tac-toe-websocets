@@ -56,6 +56,7 @@ async def handler(websocket):
                 if ttt_game.is_tied() or ttt_game.has_winner():
                     ttt_game.reset_game()
                     response = {"type": "is_valid_restart"}
+                    websockets.broadcast(CONNECTIONS, json.dumps(response))
             case "request_disconnect":
                 await websocket.send(json.dumps(
                                     {"type": "confirm_disconnect"}))

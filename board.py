@@ -141,18 +141,15 @@ class TicTacToeBoard(tk.Tk):
         file_menu = tk.Menu(master=menu_bar)
         file_menu.add_command(
             label="Play again",
-            command=lambda: asyncio.ensure_future(self.reset_board())
+            command=lambda: asyncio.ensure_future(self.request_reset_board())
         )
         menu_bar.add_cascade(label="File", menu=file_menu)
 
-    async def reset_board(self):
+    async def request_reset_board(self):
         message = {"type": "restart"}
         await self._ws.send(json.dumps(message))
 
-        # Checks if the game can be restarted.
-        response = json.loads(await self._ws.recv())
-        assert response["type"] == "is_valid_restart"
-
+    def receive_reset_order(self):
         msg = f"Ready {self._game_state.current_player.label}?"
         self._update_display(msg=msg)
         for button in self._cells.keys():
@@ -205,6 +202,8 @@ async def receive_message(websocket, board: TicTacToeBoard):
         match message["type"]:
             case "is_valid_move":
                 board.receive_move(message)
+            case "is_valid_restart":
+                board.receive_reset_order()
             case "confirm_disconnect":
                 break
 

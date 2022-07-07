@@ -99,20 +99,20 @@ class TicTacToeBoard(tk.Tk):
     def receive_move(self, response):
         """Handles what happens when the client receives a move."""
         assert response["type"] == "is_valid_move"
-        if response["valid"]:
-            self._update_button(Move(*response["move"]))
-            self._game_state.current_player = Player(
-                                                *response["current_player"])
-            match response["game_status"]:
-                case "tie":
-                    self._update_display(msg="Tied game!", color="red")
-                case "win":
-                    msg = f'Player "{self._game_state.current_player.label}" won!'
-                    color = self._game_state.current_player.color
-                    self._update_display(msg, color)
-                case "running":
-                    msg = f"{self._game_state.current_player.label}'s turn"
-                    self._update_display(msg)
+
+        self._update_button(Move(*response["move"]))
+        self._game_state.current_player = Player(
+                                            *response["current_player"])
+        match response["game_status"]:
+            case "tie":
+                self._update_display(msg="Tied game!", color="red")
+            case "win":
+                msg = f'Player "{self._game_state.current_player.label}" won!'
+                color = self._game_state.current_player.color
+                self._update_display(msg, color)
+            case "running":
+                msg = f"{self._game_state.current_player.label}'s turn"
+                self._update_display(msg)
 
     def _update_button(self, move: Move):
         button = self._find_button(move)
@@ -153,13 +153,12 @@ class TicTacToeBoard(tk.Tk):
         response = json.loads(await self._ws.recv())
         assert response["type"] == "is_valid_restart"
 
-        if response["valid"]:
-            msg = f"Ready {self._game_state.current_player.label}?"
-            self._update_display(msg=msg)
-            for button in self._cells.keys():
-                button.config(highlightbackground="lightblue")
-                button.config(text="")
-                button.config(fg="black")
+        msg = f"Ready {self._game_state.current_player.label}?"
+        self._update_display(msg=msg)
+        for button in self._cells.keys():
+            button.config(highlightbackground="lightblue")
+            button.config(text="")
+            button.config(fg="black")
 
 
 def handle_current_moves(response):

@@ -4,7 +4,7 @@ import websockets
 from tkinter import TclError
 
 from game_elements import Player, Move
-from board import TicTacToeBoard, GameState
+from client_logic.board import TicTacToeBoard, GameState
 
 
 def handle_current_moves(response):

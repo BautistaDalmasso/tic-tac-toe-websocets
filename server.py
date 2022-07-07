@@ -2,7 +2,7 @@ import asyncio
 import websockets
 import json
 
-import game
+from server_logic.game import TicTacToeGame
 from game_elements import Move
 
 
@@ -95,5 +95,5 @@ async def main():
         await asyncio.Future()  # run forever
 
 if __name__ == "__main__":
-    ttt_game = game.TicTacToeGame()
+    ttt_game = TicTacToeGame()
     asyncio.run(main())

@@ -99,7 +99,6 @@ class TicTacToeBoard(tk.Tk):
     def receive_move(self, response):
         """Handles what happens when the client receives a move."""
         assert response["type"] == "is_valid_move"
-        print("whoo!")
         if response["valid"]:
             self._update_button(Move(*response["move"]))
             self._game_state.current_player = Player(
@@ -196,6 +195,10 @@ async def run_board(root):
             raise
 
 
+async def send_disconnect_request(websocket):
+    await websocket.send(json.dumps({"type": "request_disconnect"}))
+
+
 async def receive_message(websocket, board: TicTacToeBoard):
     """Receives and handle messages from the server."""
     while True:
@@ -203,6 +206,8 @@ async def receive_message(websocket, board: TicTacToeBoard):
         match message["type"]:
             case "is_valid_move":
                 board.receive_move(message)
+            case "confirm_disconnect":
+                break
 
         print("Receive:", message)
 
@@ -230,14 +235,17 @@ async def main():
                                )
 
         board = TicTacToeBoard(websocket, game_state)
-        move_receiver_task = asyncio.create_task(
-            receive_message(websocket, board)
-        )
         board_task = asyncio.create_task(
             run_board(board)
         )
-        await move_receiver_task
+        message_receiver_task = asyncio.create_task(
+            receive_message(websocket, board)
+        )
+        board_task.add_done_callback(
+            lambda _: asyncio.ensure_future(send_disconnect_request(websocket))
+            )
         await board_task
+        await message_receiver_task
 
 
 if __name__ == "__main__":

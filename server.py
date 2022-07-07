@@ -65,10 +65,13 @@ async def handler(websocket):
                 else:
                     response = {"type": "is_valid_restart",
                                 "valid": False}
+            case "request_disconnect":
+                await websocket.send(json.dumps(
+                                    {"type": "confirm_disconnect"}))
             case _:
                 # TODO: send an error!
                 pass
-        
+
         print("Message:", message)
         print("Response:", response)
 

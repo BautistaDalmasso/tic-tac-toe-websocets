@@ -56,8 +56,6 @@ async def receive_message(websocket, board: TicTacToeBoard):
             case "confirm_disconnect":
                 break
 
-        print("Receive:", message)
-
 
 async def main():
     """Create the game's board and run its main loop."""
@@ -90,7 +88,7 @@ async def main():
         )
         board_task.add_done_callback(
             lambda _: asyncio.ensure_future(send_disconnect_request(websocket))
-            )
+        )
         await board_task
         await message_receiver_task
 

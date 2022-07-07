@@ -10,7 +10,7 @@ CONNECTIONS = set()
 
 
 async def register(websocket):
-    # Adds the connected websocket to the connections.
+    # Adds the connected websocket to connections.
     CONNECTIONS.add(websocket)
     try:
         handler_task = asyncio.create_task(handler(websocket))
@@ -46,6 +46,8 @@ async def handler(websocket):
                                     "current_player": ttt_game.current_player,
                                     "game_status": "win"}
                     else:
+                        # Only toggle the player when the game has to
+                        # keep running.
                         ttt_game.toggle_player()
                         response = {"type": "is_valid_move",
                                     "move": move,
@@ -53,6 +55,7 @@ async def handler(websocket):
                                     "game_status": "running"}
                     websockets.broadcast(CONNECTIONS, json.dumps(response))
             case "restart":
+                # Only allow restarting the game when it's finished.
                 if ttt_game.is_tied() or ttt_game.has_winner():
                     ttt_game.reset_game()
                     response = {"type": "is_valid_restart"}
@@ -60,12 +63,6 @@ async def handler(websocket):
             case "request_disconnect":
                 await websocket.send(json.dumps(
                                     {"type": "confirm_disconnect"}))
-            case _:
-                # TODO: send an error!
-                pass
-
-        print("Message:", message)
-        print("Response:", response)
 
 
 def handle_connection_response():

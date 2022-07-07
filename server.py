@@ -6,6 +6,21 @@ import game
 from game_elements import Move
 
 
+CONNECTIONS = set()
+
+
+async def register(websocket):
+    # Adds the connected websocket to the connections.
+    CONNECTIONS.add(websocket)
+    try:
+        handler_task = asyncio.create_task(handler(websocket))
+        wait_closed_task = asyncio.create_task(websocket.wait_closed())
+        await handler_task
+        await wait_closed_task
+    finally:
+        CONNECTIONS.remove(websocket)
+
+
 async def handler(websocket):
     async for message in websocket:
         # Parse events from the client.
@@ -15,6 +30,7 @@ async def handler(websocket):
             case "connect":
                 # Sends the information required to initialize a board.
                 response = handle_connection_response()
+                await websocket.send(json.dumps(response))
             case "move":
                 move = Move(*event["move"])
                 if ttt_game.is_valid_move(move):
@@ -40,6 +56,7 @@ async def handler(websocket):
                                     "game_status": "running"}
                 else:
                     response = {"type": "is_valid_move", "valid": False}
+                websockets.broadcast(CONNECTIONS, json.dumps(response))
             case "restart":
                 if ttt_game.is_tied() or ttt_game.has_winner():
                     ttt_game.reset_game()
@@ -51,7 +68,7 @@ async def handler(websocket):
             case _:
                 # TODO: send an error!
                 pass
-        await websocket.send(json.dumps(response))
+        
         print("Message:", message)
         print("Response:", response)
 
@@ -79,7 +96,7 @@ def handle_connection_response():
 
 
 async def main():
-    async with websockets.serve(handler, "", 8001):
+    async with websockets.serve(register, "", 8001):
         await asyncio.Future()  # run forever
 
 if __name__ == "__main__":

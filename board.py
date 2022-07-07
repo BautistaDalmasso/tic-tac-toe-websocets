@@ -110,17 +110,25 @@ class TicTacToeBoard(tk.Tk):
         file_menu = tk.Menu(master=menu_bar)
         file_menu.add_command(
             label="Play again",
-            command=self.reset_board
+            command=lambda: asyncio.ensure_future(self.reset_board())
         )
         menu_bar.add_cascade(label="File", menu=file_menu)
 
-    def reset_board(self):
-        # TODO: allow reseting the game.
-        self._update_display(msg="Ready?")
-        for button in self._cells.keys():
-            button.config(highlightbackground="lightblue")
-            button.config(text="")
-            button.config(fg="black")
+    async def reset_board(self):
+        message = {"type": "restart"}
+        await self._ws.send(json.dumps(message))
+
+        # Checks if the game can be restarted.
+        response = json.loads(await self._ws.recv())
+        assert response["type"] == "is_valid_restart"
+
+        if response["valid"]:
+            msg = f"Ready {self._game_state.current_player.label}?"
+            self._update_display(msg=msg)
+            for button in self._cells.keys():
+                button.config(highlightbackground="lightblue")
+                button.config(text="")
+                button.config(fg="black")
 
 
 async def run_board(root):

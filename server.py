@@ -46,6 +46,14 @@ async def handler(websocket):
                                     "game_status": "running"}
                 else:
                     response = {"type": "is_valid_move", "valid": False}
+            case "restart":
+                if ttt_game.is_tied() or ttt_game.has_winner():
+                    ttt_game.reset_game()
+                    response = {"type": "is_valid_restart",
+                                "valid": True}
+                else:
+                    response = {"type": "is_valid_restart",
+                                "valid": False}
             case _:
                 # TODO: send an error!
                 pass

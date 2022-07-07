@@ -62,7 +62,9 @@ def handle_connection_response():
                         "current_player":
                             ttt_game.current_player,
                         "board_size":
-                            ttt_game.board_size
+                            ttt_game.board_size,
+                        "all_players":
+                            ttt_game.all_players
                     }
             }
     # If the game already started then send information

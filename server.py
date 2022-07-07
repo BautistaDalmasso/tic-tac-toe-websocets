@@ -51,7 +51,7 @@ async def handler(websocket):
                                     "move": move,
                                     "current_player": ttt_game.current_player,
                                     "game_status": "running"}
-                websockets.broadcast(CONNECTIONS, json.dumps(response))
+                    websockets.broadcast(CONNECTIONS, json.dumps(response))
             case "restart":
                 if ttt_game.is_tied() or ttt_game.has_winner():
                     ttt_game.reset_game()

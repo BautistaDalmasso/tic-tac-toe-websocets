@@ -80,19 +80,16 @@ class TicTacToeBoard(tk.Tk):
             self._update_button(clicked_btn)
             self._game_state.current_player = Player(
                                                 *response["current_player"])
-            """
-            if self._game.is_tied():
-                self._update_display(msg="Tied game!", color="red")
-            elif self._game.has_winner():
-                self._highlight_cells()
-                msg = f'Player "{self._game.current_player.label}" won!'
-                color = self._game.current_player.color
-                self._update_display(msg, color)
-            else:
-                self._game.toggle_player()
-                msg = f"{self._game.current_player.label}'s turn"
-                self._update_display(msg)
-            """  # TODO: handle differents states of the game.
+            match response["game_status"]:
+                case "tie":
+                    self._update_display(msg="Tied game!", color="red")
+                case "win":
+                    msg = f'Player "{self._game_state.current_player.label}" won!'
+                    color = self._game_state.current_player.color
+                    self._update_display(msg, color)
+                case "running":
+                    msg = f"{self._game_state.current_player.label}'s turn"
+                    self._update_display(msg)
 
     def _update_button(self, clicked_btn: tk.Button):
         clicked_btn.config(text=self._game_state.current_player.label)

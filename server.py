@@ -28,10 +28,22 @@ async def handler(websocket):
                 move = Move(*event["move"])
                 if ttt_game.is_valid_move(move):
                     ttt_game.process_move(move)
-                    ttt_game.toggle_player()
-                    response = {"type": "is_valid_move",
-                                "valid": True,
-                                "current_player": ttt_game.current_player}
+                    if ttt_game.is_tied():
+                        response = {"type": "is_valid_move",
+                                    "valid": True,
+                                    "current_player": ttt_game.current_player,
+                                    "game_status": "tie"}
+                    elif ttt_game.has_winner():
+                        response = {"type": "is_valid_move",
+                                    "valid": True,
+                                    "current_player": ttt_game.current_player,
+                                    "game_status": "win"}
+                    else:
+                        ttt_game.toggle_player()
+                        response = {"type": "is_valid_move",
+                                    "valid": True,
+                                    "current_player": ttt_game.current_player,
+                                    "game_status": "running"}
                 else:
                     response = {"type": "is_valid_move", "valid": False}
             case _:

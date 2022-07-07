@@ -12,7 +12,7 @@ python server.py
 ```
 Then you can run the client in another command prompt:
 ```
-python board.py
+python client.py
 ```
 You may run multiple clients and see the moves you make in one board be reflected in another board.
 Once a game is completed (either a tie or a win), you can go into File -> Play Again to reset the board.

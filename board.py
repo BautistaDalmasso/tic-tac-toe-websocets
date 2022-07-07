@@ -21,6 +21,11 @@ class GameState:
         self.current_moves = current_moves
         self.all_players = all_players
 
+    def find_player_by_label(self, label: str) -> Player:
+        for player in self.all_players:
+            if player.label == label:
+                return player
+
 
 class TicTacToeBoard(tk.Tk):
     def __init__(self, websocket, game_state: GameState) -> None:
@@ -62,7 +67,7 @@ class TicTacToeBoard(tk.Tk):
                 self._cells[button] = (row, col)
                 button.bind("<ButtonPress-1>",
                             lambda event:
-                            asyncio.ensure_future(self.play(event)))
+                            asyncio.ensure_future(self.send_move(event)))
                 button.grid(
                     row=row,
                     column=col,
@@ -82,19 +87,21 @@ class TicTacToeBoard(tk.Tk):
                     button.config(fg=player.color)
                     break
 
-    async def play(self, event):
-        """Handle a player's move."""
+    async def send_move(self, event):
+        """Sends the server a message requesting the desired move."""
         clicked_btn = event.widget
         row, col = self._cells[clicked_btn]
         message = {"type": "move",
                    "move": Move(row, col,
                                 self._game_state.current_player.label)}
         await self._ws.send(json.dumps(message))
-        # Makes sure the move is valid:
-        response = json.loads(await self._ws.recv())
+
+    def receive_move(self, response):
+        """Handles what happens when the client receives a move."""
         assert response["type"] == "is_valid_move"
+        print("whoo!")
         if response["valid"]:
-            self._update_button(clicked_btn)
+            self._update_button(Move(*response["move"]))
             self._game_state.current_player = Player(
                                                 *response["current_player"])
             match response["game_status"]:
@@ -108,9 +115,17 @@ class TicTacToeBoard(tk.Tk):
                     msg = f"{self._game_state.current_player.label}'s turn"
                     self._update_display(msg)
 
-    def _update_button(self, clicked_btn: tk.Button):
-        clicked_btn.config(text=self._game_state.current_player.label)
-        clicked_btn.config(foreground=self._game_state.current_player.color)
+    def _update_button(self, move: Move):
+        button = self._find_button(move)
+        player = self._game_state.find_player_by_label(move.label)
+        button.config(text=player.label)
+        button.config(foreground=player.color)
+
+    def _find_button(self, move: Move) -> tk.Button:
+        row, col = move.row, move.col
+        for button, coordinates in self._cells.items():
+            if coordinates == (row, col):
+                return button
 
     def _update_display(self, msg: str, color: str = "black"):
         self.display["text"] = msg
@@ -181,6 +196,17 @@ async def run_board(root):
             raise
 
 
+async def receive_message(websocket, board: TicTacToeBoard):
+    """Receives and handle messages from the server."""
+    while True:
+        message = json.loads(await websocket.recv())
+        match message["type"]:
+            case "is_valid_move":
+                board.receive_move(message)
+
+        print("Receive:", message)
+
+
 async def main():
     """Create the game's board and run its main loop."""
     async with websockets.connect("ws://localhost:8001") as websocket:
@@ -204,7 +230,14 @@ async def main():
                                )
 
         board = TicTacToeBoard(websocket, game_state)
-        await run_board(board)
+        move_receiver_task = asyncio.create_task(
+            receive_message(websocket, board)
+        )
+        board_task = asyncio.create_task(
+            run_board(board)
+        )
+        await move_receiver_task
+        await board_task
 
 
 if __name__ == "__main__":

@@ -5,15 +5,18 @@ from tkinter import font
 import asyncio
 import websockets
 import json
+from typing import List
 
 from game_elements import Player, Move
 
 
 class GameState:
     """Keeps track of the game state at the client side."""
-    def __init__(self, board_size: int, current_player: Player):
+    def __init__(self, board_size: int, current_player: Player,
+                 current_moves: List[List[Move]]):
         self.board_size = board_size
         self.current_player = current_player
+        self.current_moves = current_moves
 
 
 class TicTacToeBoard(tk.Tk):
@@ -64,6 +67,12 @@ class TicTacToeBoard(tk.Tk):
                     pady=5,
                     sticky="nsew",
                 )
+        self._set_buttons()
+
+    def _set_buttons(self):
+        for button, coordinates in self._cells.items():
+            row, col = coordinates
+            button.config(text=self._game_state.current_moves[row][col].label)
 
     async def play(self, event):
         """Handle a player's move."""
@@ -131,6 +140,22 @@ class TicTacToeBoard(tk.Tk):
                 button.config(fg="black")
 
 
+def handle_current_moves(response):
+    board_size = response["board_data"]["board_size"]
+    if response["already_started"]:
+        board_state = response["board_data"]["board_state"]
+        current_moves = [
+            [Move(*board_state[row][col]) for col in range(board_size)]
+            for row in range(board_size)
+        ]
+    else:
+        current_moves = [
+            [Move(row, col) for col in range(board_size)]
+            for row in range(board_size)
+        ]
+    return current_moves
+
+
 async def run_board(root):
     try:
         while True:
@@ -152,9 +177,11 @@ async def main():
         # Makes sure the server's response corresponds to a
         # game starting request.
         assert response["type"] == "start_game"
+        print(response)
         board_size = response["board_data"]["board_size"]
         current_player = Player(*response["board_data"]["current_player"])
-        game_state = GameState(board_size, current_player)
+        current_moves = handle_current_moves(response)
+        game_state = GameState(board_size, current_player, current_moves)
 
         board = TicTacToeBoard(websocket, game_state)
         await run_board(board)

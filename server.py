@@ -14,16 +14,7 @@ async def handler(websocket):
         match event["type"]:
             case "connect":
                 # Sends the information required to initialize a board.
-                response = {
-                            "type": "start_game",
-                            "board_data":
-                                    {
-                                        "current_player":
-                                            ttt_game.current_player,
-                                        "board_size":
-                                            ttt_game.board_size
-                                    }
-                            }
+                response = handle_connection_response()
             case "move":
                 move = Move(*event["move"])
                 if ttt_game.is_valid_move(move):
@@ -58,7 +49,28 @@ async def handler(websocket):
                 # TODO: send an error!
                 pass
         await websocket.send(json.dumps(response))
-        print(message)
+        print("Message:", message)
+        print("Response:", response)
+
+
+def handle_connection_response():
+    response = {
+            "type": "start_game",
+            "already_started": ttt_game.running,
+            "board_data":
+                    {
+                        "current_player":
+                            ttt_game.current_player,
+                        "board_size":
+                            ttt_game.board_size
+                    }
+            }
+    # If the game already started then send information
+    # about the entire board.
+    if response["already_started"]:
+        response["board_data"]["board_state"] = ttt_game.current_moves
+
+    return response
 
 
 async def main():

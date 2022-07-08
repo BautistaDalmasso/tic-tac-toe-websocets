@@ -6,19 +6,22 @@ from server_logic.game import TicTacToeGame
 from game_elements import Move
 
 
-CONNECTIONS = set()
+CONNECTIONS = {}
 
 
 async def register(websocket):
+    # Assigns a player to the connecting client.
+    client_player = get_available_player()
     # Adds the connected websocket to connections.
-    CONNECTIONS.add(websocket)
+    CONNECTIONS[websocket] = client_player
+    print(CONNECTIONS)
     try:
         handler_task = asyncio.create_task(handler(websocket))
         wait_closed_task = asyncio.create_task(websocket.wait_closed())
         await handler_task
         await wait_closed_task
     finally:
-        CONNECTIONS.remove(websocket)
+        del CONNECTIONS[websocket]
 
 
 async def handler(websocket):
@@ -33,7 +36,8 @@ async def handler(websocket):
                 await websocket.send(json.dumps(response))
             case "move":
                 move = Move(*event["move"])
-                if ttt_game.is_valid_move(move):
+                if (ttt_game.is_valid_move(move)
+                            and CONNECTIONS[websocket] == ttt_game.current_player):
                     ttt_game.process_move(move)
                     if ttt_game.is_tied():
                         response = {"type": "is_valid_move",
@@ -66,6 +70,8 @@ async def handler(websocket):
 
 
 def handle_connection_response():
+    # Creates the response with all the information necessary to initialize
+    # a board.
     response = {
             "type": "start_game",
             "already_started": ttt_game.running,
@@ -87,10 +93,20 @@ def handle_connection_response():
     return response
 
 
+def get_available_player():
+    # Allows us to assign a specific player to the client.
+    if len(available_players) > 0:
+        client_player = available_players.pop(0)
+    else:
+        client_player = "SPECTATOR"
+
+    return client_player
+
 async def main():
     async with websockets.serve(register, "", 8001):
         await asyncio.Future()  # run forever
 
 if __name__ == "__main__":
     ttt_game = TicTacToeGame()
+    available_players = [*ttt_game.all_players]
     asyncio.run(main())

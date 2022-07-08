@@ -21,6 +21,8 @@ async def register(websocket):
         await handler_task
         await wait_closed_task
     finally:
+        # Releases the player used by the disconnecting client.
+        available_players.append(CONNECTIONS[websocket])
         del CONNECTIONS[websocket]
 
 

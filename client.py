@@ -30,6 +30,12 @@ def handle_all_players(response):
     return all_players
 
 
+def handle_assigned_player(response):
+    if response["assigned_player"] == "SPECTATOR":
+        return Player("SPECTATOR", "black")
+    return Player(*response["assigned_player"])
+
+
 async def run_board(root):
     try:
         while True:
@@ -70,16 +76,22 @@ async def main():
         assert response["type"] == "start_game"
         # Initializes a GameState according to the server's data.
         board_size = response["board_data"]["board_size"]
+        # Player that has the current turn.
         current_player = Player(*response["board_data"]["current_player"])
+        # Player that is assigned to the client.
+        assigned_player = handle_assigned_player(response)
         all_players = handle_all_players(response)
         current_moves = handle_current_moves(response)
         game_state = GameState(board_size=board_size,
                                current_player=current_player,
+                               assigned_player=assigned_player,
                                all_players=all_players,
                                current_moves=current_moves
                                )
 
         board = TicTacToeBoard(websocket, game_state)
+
+        # Here we start running the game board.
         board_task = asyncio.create_task(
             run_board(board)
         )

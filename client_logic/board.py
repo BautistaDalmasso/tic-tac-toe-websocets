@@ -13,10 +13,12 @@ class GameState:
     """Keeps track of the game state at the client side."""
     def __init__(self, board_size: int,
                  current_player: Player,
+                 assigned_player: Player,
                  current_moves: List[List[Move]],
                  all_players: List[Player]):
         self.board_size = board_size
         self.current_player = current_player
+        self.assigned_player = assigned_player
         self.current_moves = current_moves
         self.all_players = all_players
 
@@ -40,9 +42,14 @@ class TicTacToeBoard(tk.Tk):
     def _create_board_display(self):
         display_frame = tk.Frame(master=self)
         display_frame.pack(fill=tk.X)
+        if (self._game_state.assigned_player.label
+                == self._game_state.current_player.label):
+            msg = "Your turn!"
+        else:
+            msg = f"{self._game_state.current_player.label}'s turn."
         self.display = tk.Label(
             master=display_frame,
-            text=f"Ready {self._game_state.current_player.label}?",
+            text=msg,
             font=font.Font(size=28, weight="bold"),
         )
         self.display.pack()
@@ -106,11 +113,19 @@ class TicTacToeBoard(tk.Tk):
             case "tie":
                 self._update_display(msg="Tied game!", color="red")
             case "win":
-                msg = f'Player "{self._game_state.current_player.label}" won!'
+                if (self._game_state.assigned_player.label
+                        == self._game_state.current_player.label):
+                    msg = "You won!"
+                else:
+                    msg = f'Player "{self._game_state.current_player.label}" won!'
                 color = self._game_state.current_player.color
                 self._update_display(msg, color)
             case "running":
-                msg = f"{self._game_state.current_player.label}'s turn"
+                if (self._game_state.assigned_player.label
+                        == self._game_state.current_player.label):
+                    msg = "Your turn!"
+                else:
+                    msg = f"{self._game_state.current_player.label}'s turn"
                 self._update_display(msg)
 
     def _update_button(self, move: Move):
@@ -144,7 +159,11 @@ class TicTacToeBoard(tk.Tk):
         await self._ws.send(json.dumps(message))
 
     def receive_reset_order(self):
-        msg = f"Ready {self._game_state.current_player.label}?"
+        if (self._game_state.assigned_player.label
+                == self._game_state.current_player.label):
+            msg = "Your turn!"
+        else:
+            msg = f"{self._game_state.current_player.label}'s turn."
         self._update_display(msg=msg)
         for button in self._cells.keys():
             button.config(highlightbackground="lightblue")

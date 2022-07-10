@@ -152,10 +152,18 @@ class TicTacToeBoard(tk.Tk):
             label="Play again",
             command=lambda: asyncio.ensure_future(self.request_reset_board())
         )
+        file_menu.add_command(
+            label="Request player",
+            command=lambda: asyncio.ensure_future(self.request_player())
+        )
         menu_bar.add_cascade(label="File", menu=file_menu)
 
     async def request_reset_board(self):
         message = {"type": "restart"}
+        await self._ws.send(json.dumps(message))
+
+    async def request_player(self):
+        message = {"type": "player_request"}
         await self._ws.send(json.dumps(message))
 
     def receive_reset_order(self):

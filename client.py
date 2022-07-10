@@ -50,7 +50,8 @@ async def send_disconnect_request(websocket):
     await websocket.send(json.dumps({"type": "request_disconnect"}))
 
 
-async def receive_message(websocket, board: TicTacToeBoard):
+async def receive_message(websocket, board: TicTacToeBoard,
+                          g_state: GameState):
     """Receives and handle messages from the server."""
     while True:
         message = json.loads(await websocket.recv())
@@ -59,6 +60,8 @@ async def receive_message(websocket, board: TicTacToeBoard):
                 board.receive_move(message)
             case "is_valid_restart":
                 board.receive_reset_order()
+            case "player_request":
+                g_state.assigned_player = message["assigned_player"]
             case "confirm_disconnect":
                 break
 
@@ -96,7 +99,7 @@ async def main():
             run_board(board)
         )
         message_receiver_task = asyncio.create_task(
-            receive_message(websocket, board)
+            receive_message(websocket, board, game_state)
         )
         board_task.add_done_callback(
             lambda _: asyncio.ensure_future(send_disconnect_request(websocket))

@@ -66,6 +66,14 @@ async def handler(websocket):
                     ttt_game.reset_game()
                     response = {"type": "is_valid_restart"}
                     websockets.broadcast(CONNECTIONS, json.dumps(response))
+            case "player_request":
+                # Assign a player if there's one available.
+                if (CONNECTIONS[websocket] == "SPECTATOR"
+                        and len(available_players) > 0):
+                    CONNECTIONS[websocket] = get_available_player()
+                    await websocket.send(json.dumps(
+                                   {"type": "player_assigned",
+                                    "assinged_player": CONNECTIONS[websocket]}))
             case "request_disconnect":
                 await websocket.send(json.dumps(
                                     {"type": "confirm_disconnect"}))
